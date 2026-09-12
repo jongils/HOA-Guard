@@ -1,0 +1,18 @@
+{
+  "name": "hoa-guard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "공동주택 AI 감사관 - 지출 이상탐지 엔진 프로토타입",
+  "type": "module",
+  "scripts": {
+    "detect": "tsx src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
