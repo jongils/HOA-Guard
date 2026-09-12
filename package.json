@@ -7,6 +7,8 @@
   "scripts": {
     "detect": "tsx src/index.ts",
     "dashboard": "tsx src/generateDashboard.ts",
+    "compare-bids": "tsx src/runBidComparison.ts",
+    "check-announcement": "tsx src/runAnnouncementCheck.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

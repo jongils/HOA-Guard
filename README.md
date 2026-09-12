@@ -28,7 +28,8 @@ AI는 의결권을 갖지 않습니다. 의사결정 주체(입주자대표회�
 
 ## 현재 상태
 
-기획/설계 단계 완료, 1단계 MVP인 **지출 이상탐지 엔진 + 공개 대시보드** 프로토타입 구현 중. 자세한 배경은 [`docs/handoff.md`](docs/handoff.md)를 참고하세요.
+1단계 MVP(지출 이상탐지 엔진 + 공개 대시보드) 프로토타입 구현 완료, 2단계(입찰 비교 어시스턴트) 프로토타입
+구현 중. 자세한 배경은 [`docs/handoff.md`](docs/handoff.md)를 참고하세요.
 
 ## 사용 방법
 
@@ -71,7 +72,22 @@ npm run dashboard   # dashboard/index.html 생성
 `main`에 `dashboard/**` 변경이 push되면 `.github/workflows/deploy-pages.yml`이 자동으로
 GitHub Pages에 배포합니다 → **https://jongils.github.io/HOA-Guard/**
 
-### 4. GitHub 이슈/PR에서 Claude 호출 (`@claude`)
+### 4. 입찰 비교 어시스턴트 (2단계, 프로토타입)
+
+견적서를 유사 규모 단지(소형/중형/대형)의 실제 낙찰가 데이터(`data/market-bid-benchmarks.csv`)와
+자동 대조합니다. 1단계 이상탐지 엔진과 같은 방식(월 단가 정규화, 판단 근거 공개)으로 동작합니다.
+
+```bash
+npm run compare-bids       # data/sample-quotes.csv의 견적을 시세와 비교
+npm run check-announcement # 입찰 공고문 표준 조건(공고기간/브랜드 지정/배점표) 검증 예시 실행
+```
+
+- **견적 비교**: 시세 대비 20%+ 높으면 `HIGH`(고가 의심), ~17%+ 낮으면 `LOW`(품질/누락 확인 권장), 그 사이는 `NORMAL`
+- **입찰 공고문 검증**: [`templates/bid-announcement-template.md`](templates/bid-announcement-template.md) 표준 템플릿으로
+  작성한 공고문을 `checkAnnouncement()`로 검증 — 공고 기간이 너무 짧거나, 특정 브랜드를 지정했거나,
+  평가 배점 합계가 100점이 아니면 플래깅
+
+### 5. GitHub 이슈/PR에서 Claude 호출 (`@claude`)
 
 이슈나 PR 코멘트에 `@claude`를 멘션하면 [Claude Code Action](https://github.com/anthropics/claude-code-action)이
 자동으로 응답하거나 작업합니다 (`.github/workflows/claude.yml`). 최초 1회만 아래 설정이 필요합니다 (설정 완료됨).
