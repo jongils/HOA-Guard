@@ -5,17 +5,13 @@
   "description": "공동주택 AI 감사관 - 지출 이상탐지 엔진 프로토타입",
   "type": "module",
   "scripts": {
-    "detect": "tsx src/index.ts",
-    "dashboard": "tsx src/generateDashboard.ts",
-    "compare-bids": "tsx src/runBidComparison.ts",
-    "check-announcement": "tsx src/runAnnouncementCheck.ts",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "detect": "node tools/detect.js",
+    "compare-bids": "node tools/compareBids.js",
+    "check-announcement": "node tools/checkAnnouncement.js",
+    "serve": "node tools/serve.js",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }
 }

@@ -1,10 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { parseExpensesCsv } from '../dashboard/lib/parse.js';
+import { detectContractSplitting } from '../dashboard/lib/contractSplitting.js';
+import { detectPriceOutliers } from '../dashboard/lib/priceOutlier.js';
+import { detectRepeatedVendor } from '../dashboard/lib/repeatedVendor.js';
 import { appendFlags } from './appendOnlyLog.js';
-import { loadExpensesFromFile } from './data/loadExpenses.js';
-import { detectContractSplitting } from './detectors/contractSplitting.js';
-import { detectPriceOutliers } from './detectors/priceOutlier.js';
-import { detectRepeatedVendor } from './detectors/repeatedVendor.js';
 
-const records = loadExpensesFromFile('data/mock-expenses.csv');
+const records = parseExpensesCsv(readFileSync('dashboard/data/mock-expenses.csv', 'utf-8'));
 
 const flags = [
   ...detectPriceOutliers(records),
@@ -22,5 +23,5 @@ for (const flag of flags) {
 
 if (flags.length > 0) {
   appendFlags(flags);
-  console.log('플래그를 data/output/anomaly-log.jsonl 에 append 했습니다.');
+  console.log('플래그를 tools/output/anomaly-log.jsonl 에 append 했습니다.');
 }

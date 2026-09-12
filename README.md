@@ -35,59 +35,58 @@ AI는 의결권을 갖지 않습니다. 의사결정 주체(입주자대표회�
 
 ## 사용 방법
 
-### 1. 설치
+### 1. 대시보드 보기 (npm 설치 불필요)
 
-```bash
-npm install
-```
+`dashboard/index.html`은 순수 HTML + JavaScript로, 열리는 순간 브라우저가 `dashboard/data/*.csv`를
+직접 `fetch`해서 이상탐지·견적 비교를 그 자리에서 계산합니다. 미리 만들어 둘 빌드 결과물이 없고,
+Node.js/npm도 필요 없습니다.
 
-### 2. 지출 이상탐지 엔진 실행
+- **바로 보기**: **https://jongils.github.io/HOA-Guard/** (GitHub Pages, `main`에 push하면 자동 배포)
+- **로컬에서 보기**: 브라우저가 `file://`로 연 페이지에서는 로컬 CSV `fetch`를 막을 수 있으므로,
+  아무 정적 서버로 `dashboard/` 폴더를 띄워서 열어야 합니다. Node가 있다면:
+  ```bash
+  npm run serve   # http://localhost:8000 (외부 패키지 설치 없이 Node 내장 http만 사용)
+  ```
+  Node 없이도 `python3 -m http.server --directory dashboard`처럼 아무 정적 서버나 사용 가능합니다.
 
-기술 스택: Node.js + TypeScript. `data/mock-expenses.csv`의 목업 관리비 지출 데이터를 대상으로
-아래 3가지 이상탐지 로직을 검증합니다.
+### 2. 데이터 수정하기 (재생성 단계 없음)
+
+`dashboard/data/` 안의 CSV 파일만 고치면 됩니다 — GitHub 웹 UI에서 직접 편집해도 되고, 로컬에서
+고쳐서 커밋해도 됩니다. `main`에 push되는 즉시 GitHub Pages가 재배포되고, 페이지를 새로고침하면
+새 데이터로 다시 계산된 결과가 바로 보입니다. 별도의 "재생성" 커맨드가 없습니다.
+
+- `dashboard/data/mock-expenses.csv` — 관리비 지출 이력
+- `dashboard/data/market-bid-benchmarks.csv` — 유사 단지 낙찰가 데이터
+- `dashboard/data/sample-quotes.csv` — 비교할 견적서
+
+각 파일의 컬럼 형식은 기존 목업 데이터를 참고하세요.
+
+### 3. 이상탐지·견적비교 로직
 
 - **가격 이상탐지**: 같은 항목의 과거 계약 이력(월 단가로 정규화) 대비 20%+ 과다 견적 탐지
 - **반복 수의계약 탐지**: 경쟁입찰 없이 동일 업체와 연속으로 수의계약을 반복하는 패턴 탐지
 - **계약 쪼개기 탐지**: 입찰 기준액을 회피하기 위해 계약을 여러 건으로 분할한 패턴 탐지
+- **견적 비교**: 유사 규모 단지(소형/중형/대형) 낙찰가 대비 시세 대비 20%+ 높으면 `HIGH`(고가 의심),
+  ~17%+ 낮으면 `LOW`(품질/누락 확인 권장), 그 사이는 `NORMAL`
+- **입찰 공고문 검증**: [`templates/bid-announcement-template.md`](templates/bid-announcement-template.md) 표준
+  템플릿으로 작성한 공고문을 검증 — 공고 기간이 너무 짧거나, 특정 브랜드를 지정했거나, 평가 배점
+  합계가 100점이 아니면 플래깅
+
+모든 판정은 사용된 대조 데이터(과거 이력, 통계값, 임계값)를 `reference`로 함께 제공해
+블랙박스 판정이 되지 않도록 합니다. 로직은 `dashboard/lib/`에 있으며, 대시보드(`dashboard/app.js`)와
+아래 CLI 도구가 이 로직을 그대로 공유합니다.
+
+### 4. 개발용 CLI / 테스트 (선택 사항 — npm 필요)
+
+사이트를 "운영"하는 데는 필요 없고, 터미널에서 빠르게 리포트를 보거나 로직을 검증하고 싶을 때만 씁니다.
 
 ```bash
-npm run detect     # 이상탐지 실행 및 콘솔 리포트 출력
-npm test           # 탐지 로직 단위 테스트
-npm run typecheck  # 타입 검사
+npm install
+npm run detect             # 이상탐지 콘솔 리포트 (tools/output/anomaly-log.jsonl에 append-only 기록)
+npm run compare-bids       # 견적 비교 콘솔 리포트
+npm run check-announcement # 입찰 공고문 검증 예시 실행
+npm test                   # dashboard/lib/ 로직 단위 테스트 (24개)
 ```
-
-모든 플래그는 판단에 사용된 대조 데이터(과거 이력, 통계값, 임계값)를 `reference` 필드에 함께 담아
-블랙박스 판정이 되지 않도록 합니다. 플래그는 `data/output/anomaly-log.jsonl`에 append-only로 기록됩니다.
-
-실제 데이터로 검증하려면 `data/mock-expenses.csv`를 같은 형식(계약일/업체/항목/계약방식/금액/계약기간)의
-실데이터로 교체한 뒤 다시 실행하면 됩니다.
-
-### 3. 공개 대시보드 생성 및 확인
-
-```bash
-npm run dashboard   # dashboard/index.html 생성
-```
-
-외부 서버 없이 브라우저에서 파일을 바로 열어보거나, 정적 호스팅할 수 있습니다. 전체 지출 내역과
-이상탐지 플래그, 견적서 시세 비교 결과, 각 판정의 판단 근거(대조 데이터)를 한 화면에서 확인할 수 있습니다.
-
-`main`에 `dashboard/**` 변경이 push되면 `.github/workflows/deploy-pages.yml`이 자동으로
-GitHub Pages에 배포합니다 → **https://jongils.github.io/HOA-Guard/**
-
-### 4. 입찰 비교 어시스턴트 (2단계, 프로토타입)
-
-견적서를 유사 규모 단지(소형/중형/대형)의 실제 낙찰가 데이터(`data/market-bid-benchmarks.csv`)와
-자동 대조합니다. 1단계 이상탐지 엔진과 같은 방식(월 단가 정규화, 판단 근거 공개)으로 동작합니다.
-
-```bash
-npm run compare-bids       # data/sample-quotes.csv의 견적을 시세와 비교
-npm run check-announcement # 입찰 공고문 표준 조건(공고기간/브랜드 지정/배점표) 검증 예시 실행
-```
-
-- **견적 비교**: 시세 대비 20%+ 높으면 `HIGH`(고가 의심), ~17%+ 낮으면 `LOW`(품질/누락 확인 권장), 그 사이는 `NORMAL`
-- **입찰 공고문 검증**: [`templates/bid-announcement-template.md`](templates/bid-announcement-template.md) 표준 템플릿으로
-  작성한 공고문을 `checkAnnouncement()`로 검증 — 공고 기간이 너무 짧거나, 특정 브랜드를 지정했거나,
-  평가 배점 합계가 100점이 아니면 플래깅
 
 ### 5. GitHub 이슈/PR에서 Claude 호출 (`@claude`)
 

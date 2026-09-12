@@ -1,5 +1,5 @@
-export function groupBy<T, K>(items: T[], keyFn: (item: T) => K): Map<K, T[]> {
-  const map = new Map<K, T[]>();
+export function groupBy(items, keyFn) {
+  const map = new Map();
   for (const item of items) {
     const key = keyFn(item);
     const group = map.get(key);

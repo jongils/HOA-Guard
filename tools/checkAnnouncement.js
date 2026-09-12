@@ -1,7 +1,6 @@
-import { checkAnnouncement } from './bidAnnouncementChecker.js';
-import type { AnnouncementInput } from './types.js';
+import { checkAnnouncement } from '../dashboard/lib/bidAnnouncementChecker.js';
 
-const goodExample: AnnouncementInput = {
+const goodExample = {
   title: '202X년도 단지 승강기 유지보수 용역 입찰 공고',
   category: '승강기유지보수',
   publishedAt: '2025-09-01',
@@ -16,7 +15,7 @@ const goodExample: AnnouncementInput = {
   specifiedBrands: [],
 };
 
-const badExample: AnnouncementInput = {
+const badExample = {
   title: '202X년도 단지 보안 용역 입찰 공고',
   category: '보안',
   publishedAt: '2025-09-01',
@@ -29,7 +28,7 @@ const badExample: AnnouncementInput = {
 for (const [label, announcement] of [
   ['정상 예시', goodExample],
   ['문제 예시', badExample],
-] as const) {
+]) {
   const flags = checkAnnouncement(announcement);
   console.log(`--- ${label}: ${announcement.title} ---`);
   if (flags.length === 0) {

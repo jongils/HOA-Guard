@@ -1,10 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { loadExpensesFromFile } from '../src/data/loadExpenses.js';
-import { detectContractSplitting } from '../src/detectors/contractSplitting.js';
-import { detectPriceOutliers } from '../src/detectors/priceOutlier.js';
-import { detectRepeatedVendor } from '../src/detectors/repeatedVendor.js';
+import { parseExpensesCsv } from '../dashboard/lib/parse.js';
+import { detectContractSplitting } from '../dashboard/lib/contractSplitting.js';
+import { detectPriceOutliers } from '../dashboard/lib/priceOutlier.js';
+import { detectRepeatedVendor } from '../dashboard/lib/repeatedVendor.js';
 
-const records = loadExpensesFromFile('data/mock-expenses.csv');
+const records = parseExpensesCsv(readFileSync('dashboard/data/mock-expenses.csv', 'utf-8'));
 
 describe('detectPriceOutliers', () => {
   const flags = detectPriceOutliers(records);

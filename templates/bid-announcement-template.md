@@ -40,5 +40,5 @@
 
 ---
 
-이 템플릿으로 작성한 공고문은 `src/bidAnnouncementChecker.ts`의 `checkAnnouncement()`로
-공고 기간·특정 브랜드 지정·배점 합계를 기계적으로 한 번 더 검증할 수 있습니다.
+이 템플릿으로 작성한 공고문은 `dashboard/lib/bidAnnouncementChecker.js`의 `checkAnnouncement()`로
+공고 기간·특정 브랜드 지정·배점 합계를 기계적으로 한 번 더 검증할 수 있습니다 (`npm run check-announcement`).

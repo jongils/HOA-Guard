@@ -1,10 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { compareQuote, compareQuotes } from '../src/bidComparison.js';
-import { loadBidBenchmarksFromFile, loadQuoteSubmissionsFromFile } from '../src/data/loadBidData.js';
-import type { QuoteSubmission } from '../src/types.js';
+import { compareQuote, compareQuotes } from '../dashboard/lib/bidComparison.js';
+import { parseBidBenchmarksCsv, parseQuoteSubmissionsCsv } from '../dashboard/lib/parse.js';
 
-const benchmarks = loadBidBenchmarksFromFile('data/market-bid-benchmarks.csv');
-const quotes = loadQuoteSubmissionsFromFile('data/sample-quotes.csv');
+const benchmarks = parseBidBenchmarksCsv(readFileSync('dashboard/data/market-bid-benchmarks.csv', 'utf-8'));
+const quotes = parseQuoteSubmissionsCsv(readFileSync('dashboard/data/sample-quotes.csv', 'utf-8'));
 const results = compareQuotes(quotes, benchmarks);
 
 describe('compareQuotes with sample data', () => {
@@ -43,7 +43,7 @@ describe('compareQuotes with sample data', () => {
 
 describe('compareQuote with no matching benchmark', () => {
   it('returns NO_BENCHMARK when the category/size band has no comparable data', () => {
-    const quote: QuoteSubmission = {
+    const quote = {
       id: '99',
       category: '조경',
       vendor: '테스트조경',

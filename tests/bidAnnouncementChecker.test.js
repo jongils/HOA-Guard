@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { checkAnnouncement } from '../src/bidAnnouncementChecker.js';
-import type { AnnouncementInput } from '../src/types.js';
+import { checkAnnouncement } from '../dashboard/lib/bidAnnouncementChecker.js';
 
-const compliant: AnnouncementInput = {
+const compliant = {
   title: '테스트 공고',
   category: '승강기유지보수',
   publishedAt: '2025-09-01',

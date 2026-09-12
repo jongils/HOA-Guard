@@ -1,5 +1,3 @@
-import type { AnnouncementFlag, AnnouncementInput } from './types.js';
-
 const MIN_NOTICE_DAYS = 10; // 예시 기준: 공고~마감 최소 기간 (단지 규약에 맞게 조정 가능)
 const WEIGHT_TOLERANCE = 0.01;
 
@@ -7,8 +5,8 @@ const WEIGHT_TOLERANCE = 0.01;
  * 자유 텍스트가 아닌 구조화된 공고 항목만 검사한다 — 애매한 문구 판단은 여전히
  * 사람(대표회의)의 몫이며, 여기서는 객관적으로 확인 가능한 조건만 플래깅한다.
  */
-export function checkAnnouncement(input: AnnouncementInput): AnnouncementFlag[] {
-  const flags: AnnouncementFlag[] = [];
+export function checkAnnouncement(input) {
+  const flags = [];
 
   const noticeDays = daysBetween(input.publishedAt, input.deadlineAt);
   if (noticeDays < MIN_NOTICE_DAYS) {
@@ -39,7 +37,7 @@ export function checkAnnouncement(input: AnnouncementInput): AnnouncementFlag[] 
   return flags;
 }
 
-function daysBetween(startIso: string, endIso: string): number {
+function daysBetween(startIso, endIso) {
   const start = new Date(startIso).getTime();
   const end = new Date(endIso).getTime();
   return Math.round((end - start) / (1000 * 60 * 60 * 24));
