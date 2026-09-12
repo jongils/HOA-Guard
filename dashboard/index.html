@@ -10,6 +10,7 @@
     --bg: #f7f7f5; --card-bg: #ffffff; --text: #1f2328; --muted: #6b7280;
     --border: #e5e7eb; --accent: #2563eb;
     --price: #dc2626; --vendor: #d97706; --split: #7c3aed; --flagged: #b91c1c;
+    --verdict-high: #dc2626; --verdict-normal: #16a34a; --verdict-low: #d97706; --verdict-none: #6b7280;
   }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #16181d; --card-bg: #1f2228; --text: #e5e7eb; --muted: #9ca3af; --border: #333844; }
@@ -29,6 +30,10 @@
   .flag-PRICE_OUTLIER { border-left-color: var(--price); }
   .flag-REPEATED_VENDOR { border-left-color: var(--vendor); }
   .flag-CONTRACT_SPLITTING { border-left-color: var(--split); }
+  .verdict-HIGH { border-left-color: var(--verdict-high); }
+  .verdict-NORMAL { border-left-color: var(--verdict-normal); }
+  .verdict-LOW { border-left-color: var(--verdict-low); }
+  .verdict-NO_BENCHMARK { border-left-color: var(--verdict-none); }
   .flag-card-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
   .flag-meta { color: var(--muted); font-size: 0.85rem; }
   .flag-description { margin: 6px 0; }
@@ -37,6 +42,10 @@
   .badge-REPEATED_VENDOR { background: var(--vendor); }
   .badge-CONTRACT_SPLITTING { background: var(--split); }
   .badge-flagged { background: var(--flagged); }
+  .verdict-badge-HIGH { background: var(--verdict-high); }
+  .verdict-badge-NORMAL { background: var(--verdict-normal); }
+  .verdict-badge-LOW { background: var(--verdict-low); }
+  .verdict-badge-NO_BENCHMARK { background: var(--verdict-none); }
   details summary { cursor: pointer; color: var(--accent); font-size: 0.85rem; }
   .reference-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 0.8rem; }
   .reference-table th, .reference-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); word-break: break-all; }
@@ -46,6 +55,7 @@
   table.records .num { text-align: right; }
   .flagged-row { background: rgba(220, 38, 38, 0.07); }
   .table-scroll { overflow-x: auto; }
+  .muted-note { color: var(--muted); font-size: 0.85rem; }
   footer { margin-top: 40px; color: var(--muted); font-size: 0.78rem; }
 </style>
 </head>
@@ -53,7 +63,7 @@
 <div class="wrap">
   <header>
     <h1>HOA-Guard 공개 대시보드</h1>
-    <p>공동주택 관리비 지출 이상탐지 현황 · 생성 시각 2026-09-12T06:55:21.204Z</p>
+    <p>공동주택 관리비 지출 이상탐지 현황 · 생성 시각 2026-09-12T07:46:48.115Z</p>
   </header>
 
   <div class="governance">
@@ -382,6 +392,75 @@
     </tr></tbody>
     </table>
   </div>
+
+  <h2>입찰 비교 어시스턴트 — 견적 대조 (5건)</h2>
+  <div class="stats">
+    <div class="stat-card"><div class="value">2</div><div class="label">고가 의심</div></div>
+    <div class="stat-card"><div class="value">2</div><div class="label">적정 범위</div></div>
+    <div class="stat-card"><div class="value">1</div><div class="label">저가 의심</div></div>
+  </div>
+  
+    <article class="flag-card verdict-HIGH">
+      <div class="flag-card-header">
+        <span class="badge verdict-badge-HIGH">고가 의심</span>
+        <span class="flag-meta">승강기유지보수(중형) · 새롬엘리베이터</span>
+      </div>
+      <p class="flag-description">승강기유지보수(중형) 견적(새롬엘리베이터)이 유사 단지 낙찰가 대비 42.9% 높습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>quoteAmount</th><td>18000000</td></tr><tr><th>quoteMonthlyRate</th><td>1500000</td></tr><tr><th>benchmarkSampleSize</th><td>5</td></tr><tr><th>benchmarkMedianRate</th><td>1050000</td></tr><tr><th>ratioToMedian</th><td>1.429</td></tr><tr><th>highThresholdRatio</th><td>1.2</td></tr><tr><th>lowThresholdRatio</th><td>0.833</td></tr><tr><th>benchmarkMonthlyRates</th><td>[1016667,1033333,1050000,1075000,1091667]</td></tr><tr><th>iqrBounds</th><td>{&quot;q1&quot;:1033333.3333333334,&quot;q3&quot;:1075000,&quot;lower&quot;:970833.3333333335,&quot;upper&quot;:1137500}</td></tr><tr><th>zScoreVsBenchmark</th><td>16.43</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card verdict-NORMAL">
+      <div class="flag-card-header">
+        <span class="badge verdict-badge-NORMAL">적정 범위</span>
+        <span class="flag-meta">청소(대형) · 클린마스터</span>
+      </div>
+      <p class="flag-description">청소(대형) 견적(클린마스터)은 유사 단지 낙찰가 대비 적정 범위입니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>quoteAmount</th><td>66500000</td></tr><tr><th>quoteMonthlyRate</th><td>5541667</td></tr><tr><th>benchmarkSampleSize</th><td>5</td></tr><tr><th>benchmarkMedianRate</th><td>5500000</td></tr><tr><th>ratioToMedian</th><td>1.008</td></tr><tr><th>highThresholdRatio</th><td>1.2</td></tr><tr><th>lowThresholdRatio</th><td>0.833</td></tr><tr><th>benchmarkMonthlyRates</th><td>[5291667,5400000,5500000,5600000,5708333]</td></tr><tr><th>iqrBounds</th><td>{&quot;q1&quot;:5400000,&quot;q3&quot;:5600000,&quot;lower&quot;:5100000,&quot;upper&quot;:5900000}</td></tr><tr><th>zScoreVsBenchmark</th><td>0.29</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card verdict-HIGH">
+      <div class="flag-card-header">
+        <span class="badge verdict-badge-HIGH">고가 의심</span>
+        <span class="flag-meta">보안(소형) · 가드원</span>
+      </div>
+      <p class="flag-description">보안(소형) 견적(가드원)이 유사 단지 낙찰가 대비 33.3% 높습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>quoteAmount</th><td>24000000</td></tr><tr><th>quoteMonthlyRate</th><td>2000000</td></tr><tr><th>benchmarkSampleSize</th><td>5</td></tr><tr><th>benchmarkMedianRate</th><td>1500000</td></tr><tr><th>ratioToMedian</th><td>1.333</td></tr><tr><th>highThresholdRatio</th><td>1.2</td></tr><tr><th>lowThresholdRatio</th><td>0.833</td></tr><tr><th>benchmarkMonthlyRates</th><td>[1433333,1466667,1500000,1533333,1566667]</td></tr><tr><th>iqrBounds</th><td>{&quot;q1&quot;:1466666.6666666667,&quot;q3&quot;:1533333.3333333333,&quot;lower&quot;:1366666.666666667,&quot;upper&quot;:1633333.333333333}</td></tr><tr><th>zScoreVsBenchmark</th><td>10.61</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card verdict-NORMAL">
+      <div class="flag-card-header">
+        <span class="badge verdict-badge-NORMAL">적정 범위</span>
+        <span class="flag-meta">승강기유지보수(소형) · 가온엘리베이터</span>
+      </div>
+      <p class="flag-description">승강기유지보수(소형) 견적(가온엘리베이터)은 유사 단지 낙찰가 대비 적정 범위입니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>quoteAmount</th><td>6800000</td></tr><tr><th>quoteMonthlyRate</th><td>566667</td></tr><tr><th>benchmarkSampleSize</th><td>5</td></tr><tr><th>benchmarkMedianRate</th><td>608333</td></tr><tr><th>ratioToMedian</th><td>0.932</td></tr><tr><th>highThresholdRatio</th><td>1.2</td></tr><tr><th>lowThresholdRatio</th><td>0.833</td></tr><tr><th>benchmarkMonthlyRates</th><td>[583333,591667,608333,616667,633333]</td></tr><tr><th>iqrBounds</th><td>{&quot;q1&quot;:591666.6666666666,&quot;q3&quot;:616666.6666666666,&quot;lower&quot;:554166.6666666666,&quot;upper&quot;:654166.6666666666}</td></tr><tr><th>zScoreVsBenchmark</th><td>-2.25</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card verdict-LOW">
+      <div class="flag-card-header">
+        <span class="badge verdict-badge-LOW">저가 의심</span>
+        <span class="flag-meta">청소(중형) · 저가클린</span>
+      </div>
+      <p class="flag-description">청소(중형) 견적(저가클린)이 유사 단지 낙찰가 대비 30.1% 낮습니다. 이례적으로 낮은 견적은 품질/누락 항목 확인이 필요할 수 있습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>quoteAmount</th><td>26000000</td></tr><tr><th>quoteMonthlyRate</th><td>2166667</td></tr><tr><th>benchmarkSampleSize</th><td>5</td></tr><tr><th>benchmarkMedianRate</th><td>3100000</td></tr><tr><th>ratioToMedian</th><td>0.699</td></tr><tr><th>highThresholdRatio</th><td>1.2</td></tr><tr><th>lowThresholdRatio</th><td>0.833</td></tr><tr><th>benchmarkMonthlyRates</th><td>[2983333,3041667,3100000,3158333,3216667]</td></tr><tr><th>iqrBounds</th><td>{&quot;q1&quot;:3041666.6666666665,&quot;q3&quot;:3158333.3333333335,&quot;lower&quot;:2866666.666666666,&quot;upper&quot;:3333333.333333334}</td></tr><tr><th>zScoreVsBenchmark</th><td>-11.31</td></tr></table>
+      </details>
+    </article>
+  <p class="muted-note">
+    유사 규모 단지(소형/중형/대형) 낙찰가 데이터(<code>data/market-bid-benchmarks.csv</code>) 대비
+    월 단가 기준으로 비교한 결과입니다. 입찰 공고문 표준 템플릿과 특정업체 유리 조건 검사는
+    <a href="https://github.com/jongils/HOA-Guard/blob/main/templates/bid-announcement-template.md">templates/bid-announcement-template.md</a>와
+    <code>npm run check-announcement</code>를 참고하세요.
+  </p>
 
   <footer>
     HOA-Guard 프로토타입 · data/mock-expenses.csv 기반 · <code>npm run dashboard</code>로 재생성

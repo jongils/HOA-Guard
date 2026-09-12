@@ -67,7 +67,7 @@ npm run dashboard   # dashboard/index.html 생성
 ```
 
 외부 서버 없이 브라우저에서 파일을 바로 열어보거나, 정적 호스팅할 수 있습니다. 전체 지출 내역과
-이상탐지 플래그, 각 플래그의 판단 근거(대조 데이터)를 한 화면에서 확인할 수 있습니다.
+이상탐지 플래그, 견적서 시세 비교 결과, 각 판정의 판단 근거(대조 데이터)를 한 화면에서 확인할 수 있습니다.
 
 `main`에 `dashboard/**` 변경이 push되면 `.github/workflows/deploy-pages.yml`이 자동으로
 GitHub Pages에 배포합니다 → **https://jongils.github.io/HOA-Guard/**

@@ -1,9 +1,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { compareQuotes } from './bidComparison.js';
+import { loadBidBenchmarksFromFile, loadQuoteSubmissionsFromFile } from './data/loadBidData.js';
 import { loadExpensesFromFile } from './data/loadExpenses.js';
 import { detectContractSplitting } from './detectors/contractSplitting.js';
 import { detectPriceOutliers } from './detectors/priceOutlier.js';
 import { detectRepeatedVendor } from './detectors/repeatedVendor.js';
-import type { AnomalyFlag, ExpenseRecord } from './types.js';
+import type { AnomalyFlag, BidComparisonResult, ExpenseRecord } from './types.js';
 
 const OUTPUT_PATH = 'dashboard/index.html';
 
@@ -11,6 +13,13 @@ const FLAG_LABELS: Record<AnomalyFlag['type'], string> = {
   PRICE_OUTLIER: '가격 이상탐지',
   REPEATED_VENDOR: '반복 수의계약',
   CONTRACT_SPLITTING: '계약 쪼개기',
+};
+
+const VERDICT_LABELS: Record<BidComparisonResult['verdict'], string> = {
+  HIGH: '고가 의심',
+  NORMAL: '적정 범위',
+  LOW: '저가 의심',
+  NO_BENCHMARK: '비교 데이터 없음',
 };
 
 function won(amount: number): string {
@@ -48,6 +57,21 @@ function renderFlagCard(flag: AnomalyFlag): string {
     </article>`;
 }
 
+function renderBidCard(result: BidComparisonResult): string {
+  return `
+    <article class="flag-card verdict-${result.verdict}">
+      <div class="flag-card-header">
+        <span class="badge verdict-badge-${result.verdict}">${VERDICT_LABELS[result.verdict]}</span>
+        <span class="flag-meta">${escapeHtml(result.category)}(${escapeHtml(result.complexSizeBand)}) · ${escapeHtml(result.vendor)}</span>
+      </div>
+      <p class="flag-description">${escapeHtml(result.description)}</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        ${renderReferenceTable(result.reference)}
+      </details>
+    </article>`;
+}
+
 function renderRecordRow(record: ExpenseRecord, flaggedIds: Set<string>): string {
   const isFlagged = flaggedIds.has(record.id);
   return `
@@ -61,10 +85,11 @@ function renderRecordRow(record: ExpenseRecord, flaggedIds: Set<string>): string
     </tr>`;
 }
 
-function buildHtml(records: ExpenseRecord[], flags: AnomalyFlag[]): string {
+function buildHtml(records: ExpenseRecord[], flags: AnomalyFlag[], bidResults: BidComparisonResult[]): string {
   const flaggedIds = new Set(flags.flatMap((f) => f.recordIds));
   const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
   const countByType = (type: AnomalyFlag['type']) => flags.filter((f) => f.type === type).length;
+  const countByVerdict = (verdict: BidComparisonResult['verdict']) => bidResults.filter((r) => r.verdict === verdict).length;
   const sortedRecords = [...records].sort((a, b) => a.contractDate.localeCompare(b.contractDate));
   const generatedAt = new Date().toISOString();
 
@@ -80,6 +105,7 @@ function buildHtml(records: ExpenseRecord[], flags: AnomalyFlag[]): string {
     --bg: #f7f7f5; --card-bg: #ffffff; --text: #1f2328; --muted: #6b7280;
     --border: #e5e7eb; --accent: #2563eb;
     --price: #dc2626; --vendor: #d97706; --split: #7c3aed; --flagged: #b91c1c;
+    --verdict-high: #dc2626; --verdict-normal: #16a34a; --verdict-low: #d97706; --verdict-none: #6b7280;
   }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #16181d; --card-bg: #1f2228; --text: #e5e7eb; --muted: #9ca3af; --border: #333844; }
@@ -99,6 +125,10 @@ function buildHtml(records: ExpenseRecord[], flags: AnomalyFlag[]): string {
   .flag-PRICE_OUTLIER { border-left-color: var(--price); }
   .flag-REPEATED_VENDOR { border-left-color: var(--vendor); }
   .flag-CONTRACT_SPLITTING { border-left-color: var(--split); }
+  .verdict-HIGH { border-left-color: var(--verdict-high); }
+  .verdict-NORMAL { border-left-color: var(--verdict-normal); }
+  .verdict-LOW { border-left-color: var(--verdict-low); }
+  .verdict-NO_BENCHMARK { border-left-color: var(--verdict-none); }
   .flag-card-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
   .flag-meta { color: var(--muted); font-size: 0.85rem; }
   .flag-description { margin: 6px 0; }
@@ -107,6 +137,10 @@ function buildHtml(records: ExpenseRecord[], flags: AnomalyFlag[]): string {
   .badge-REPEATED_VENDOR { background: var(--vendor); }
   .badge-CONTRACT_SPLITTING { background: var(--split); }
   .badge-flagged { background: var(--flagged); }
+  .verdict-badge-HIGH { background: var(--verdict-high); }
+  .verdict-badge-NORMAL { background: var(--verdict-normal); }
+  .verdict-badge-LOW { background: var(--verdict-low); }
+  .verdict-badge-NO_BENCHMARK { background: var(--verdict-none); }
   details summary { cursor: pointer; color: var(--accent); font-size: 0.85rem; }
   .reference-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 0.8rem; }
   .reference-table th, .reference-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); word-break: break-all; }
@@ -116,6 +150,7 @@ function buildHtml(records: ExpenseRecord[], flags: AnomalyFlag[]): string {
   table.records .num { text-align: right; }
   .flagged-row { background: rgba(220, 38, 38, 0.07); }
   .table-scroll { overflow-x: auto; }
+  .muted-note { color: var(--muted); font-size: 0.85rem; }
   footer { margin-top: 40px; color: var(--muted); font-size: 0.78rem; }
 </style>
 </head>
@@ -152,6 +187,20 @@ function buildHtml(records: ExpenseRecord[], flags: AnomalyFlag[]): string {
     </table>
   </div>
 
+  <h2>입찰 비교 어시스턴트 — 견적 대조 (${bidResults.length}건)</h2>
+  <div class="stats">
+    <div class="stat-card"><div class="value">${countByVerdict('HIGH')}</div><div class="label">고가 의심</div></div>
+    <div class="stat-card"><div class="value">${countByVerdict('NORMAL')}</div><div class="label">적정 범위</div></div>
+    <div class="stat-card"><div class="value">${countByVerdict('LOW')}</div><div class="label">저가 의심</div></div>
+  </div>
+  ${bidResults.length > 0 ? bidResults.map(renderBidCard).join('') : '<p>비교할 견적서가 없습니다.</p>'}
+  <p class="muted-note">
+    유사 규모 단지(소형/중형/대형) 낙찰가 데이터(<code>data/market-bid-benchmarks.csv</code>) 대비
+    월 단가 기준으로 비교한 결과입니다. 입찰 공고문 표준 템플릿과 특정업체 유리 조건 검사는
+    <a href="https://github.com/jongils/HOA-Guard/blob/main/templates/bid-announcement-template.md">templates/bid-announcement-template.md</a>와
+    <code>npm run check-announcement</code>를 참고하세요.
+  </p>
+
   <footer>
     HOA-Guard 프로토타입 · data/mock-expenses.csv 기반 · <code>npm run dashboard</code>로 재생성
   </footer>
@@ -168,6 +217,10 @@ const flags = [
   ...detectContractSplitting(records),
 ];
 
+const benchmarks = loadBidBenchmarksFromFile('data/market-bid-benchmarks.csv');
+const quotes = loadQuoteSubmissionsFromFile('data/sample-quotes.csv');
+const bidResults = compareQuotes(quotes, benchmarks);
+
 mkdirSync('dashboard', { recursive: true });
-writeFileSync(OUTPUT_PATH, buildHtml(records, flags), 'utf-8');
-console.log(`대시보드를 생성했습니다: ${OUTPUT_PATH} (지출 ${records.length}건, 플래그 ${flags.length}건)`);
+writeFileSync(OUTPUT_PATH, buildHtml(records, flags, bidResults), 'utf-8');
+console.log(`대시보드를 생성했습니다: ${OUTPUT_PATH} (지출 ${records.length}건, 플래그 ${flags.length}건, 견적 비교 ${bidResults.length}건)`);
