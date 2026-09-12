@@ -28,7 +28,7 @@ AI는 의결권을 갖지 않습니다. 의사결정 주체(입주자대표회�
 
 ## 현재 상태
 
-기획/설계 단계 완료, 1단계 MVP인 **지출 이상탐지 엔진** 프로토타입 구현 중. 자세한 배경은 [`docs/handoff.md`](docs/handoff.md)를 참고하세요.
+기획/설계 단계 완료, 1단계 MVP인 **지출 이상탐지 엔진 + 공개 대시보드** 프로토타입 구현 중. 자세한 배경은 [`docs/handoff.md`](docs/handoff.md)를 참고하세요.
 
 ## 지출 이상탐지 엔진 (프로토타입)
 
@@ -44,7 +44,14 @@ AI는 의결권을 갖지 않습니다. 의사결정 주체(입주자대표회�
 
 ```bash
 npm install
-npm run detect     # 이상탐지 실행 및 리포트 출력
+npm run detect     # 이상탐지 실행 및 콘솔 리포트 출력
+npm run dashboard  # dashboard/index.html 정적 대시보드 생성
 npm test           # 탐지 로직 단위 테스트
 npm run typecheck
 ```
+
+## 공개 대시보드
+
+`npm run dashboard`로 `dashboard/index.html`을 생성합니다. 외부 서버 없이 브라우저에서 파일을 바로
+열어보거나, GitHub Pages 등으로 정적 호스팅할 수 있습니다. 전체 지출 내역과 이상탐지 플래그, 그리고
+각 플래그의 판단 근거(대조 데이터)를 한 화면에서 확인할 수 있습니다.

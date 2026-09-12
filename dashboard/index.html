@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOA-Guard 공개 대시보드</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f5; --card-bg: #ffffff; --text: #1f2328; --muted: #6b7280;
+    --border: #e5e7eb; --accent: #2563eb;
+    --price: #dc2626; --vendor: #d97706; --split: #7c3aed; --flagged: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181d; --card-bg: #1f2228; --text: #e5e7eb; --muted: #9ca3af; --border: #333844; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+  header h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  header p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .governance { margin: 20px 0; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-bg); font-size: 0.85rem; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 24px 0; }
+  .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat-card .value { font-size: 1.4rem; font-weight: 700; }
+  .stat-card .label { font-size: 0.8rem; color: var(--muted); }
+  h2 { font-size: 1.1rem; margin: 32px 0 12px; }
+  .flag-card { background: var(--card-bg); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .flag-PRICE_OUTLIER { border-left-color: var(--price); }
+  .flag-REPEATED_VENDOR { border-left-color: var(--vendor); }
+  .flag-CONTRACT_SPLITTING { border-left-color: var(--split); }
+  .flag-card-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .flag-meta { color: var(--muted); font-size: 0.85rem; }
+  .flag-description { margin: 6px 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #fff; }
+  .badge-PRICE_OUTLIER { background: var(--price); }
+  .badge-REPEATED_VENDOR { background: var(--vendor); }
+  .badge-CONTRACT_SPLITTING { background: var(--split); }
+  .badge-flagged { background: var(--flagged); }
+  details summary { cursor: pointer; color: var(--accent); font-size: 0.85rem; }
+  .reference-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 0.8rem; }
+  .reference-table th, .reference-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); word-break: break-all; }
+  .reference-table th { width: 40%; color: var(--muted); font-weight: 500; }
+  table.records { width: 100%; border-collapse: collapse; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 0.85rem; }
+  table.records th, table.records td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  table.records .num { text-align: right; }
+  .flagged-row { background: rgba(220, 38, 38, 0.07); }
+  .table-scroll { overflow-x: auto; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 0.78rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>HOA-Guard 공개 대시보드</h1>
+    <p>공동주택 관리비 지출 이상탐지 현황 · 생성 시각 2026-09-12T06:55:21.204Z</p>
+  </header>
+
+  <div class="governance">
+    이 대시보드는 <strong>AI 의결권을 갖지 않습니다.</strong> 아래 표시된 항목은 판단이 아니라 대표회의와 주민이
+    함께 확인해야 할 <strong>대조 데이터 기반 이상탐지 결과</strong>입니다. 모든 플래그에는 판단 근거를 함께
+    공개합니다 (블랙박스 판정 금지). 현재 데이터는 프로토타입 검증용 목업입니다.
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="value">28</div><div class="label">총 지출 건수</div></div>
+    <div class="stat-card"><div class="value">469,600,000원</div><div class="label">총 지출액</div></div>
+    <div class="stat-card"><div class="value">7</div><div class="label">이상탐지 플래그</div></div>
+    <div class="stat-card"><div class="value">2</div><div class="label">가격 이상탐지</div></div>
+    <div class="stat-card"><div class="value">4</div><div class="label">반복 수의계약</div></div>
+    <div class="stat-card"><div class="value">1</div><div class="label">계약 쪼개기</div></div>
+  </div>
+
+  <h2>이상탐지 내역 (7건)</h2>
+  
+    <article class="flag-card flag-PRICE_OUTLIER">
+      <div class="flag-card-header">
+        <span class="badge badge-PRICE_OUTLIER">가격 이상탐지</span>
+        <span class="flag-meta">승강기유지보수 · 가온엘리베이터</span>
+      </div>
+      <p class="flag-description">승강기유지보수 계약(가온엘리베이터, 2024-03-01) 금액이 과거 이력 대비 시세보다 32.0% 높습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>amount</th><td>16500000</td></tr><tr><th>monthlyRate</th><td>1375000</td></tr><tr><th>historyMedianRate</th><td>1041667</td></tr><tr><th>ratioToHistoryMedian</th><td>1.32</td></tr><tr><th>thresholdRatio</th><td>1.2</td></tr><tr><th>historySampleSize</th><td>3</td></tr><tr><th>historyMonthlyRates</th><td>[1000000,1041667,1083333]</td></tr><tr><th>iqrBounds</th><td>{&quot;q1&quot;:1020833.3333333333,&quot;q3&quot;:1062500,&quot;lower&quot;:958333.3333333331,&quot;upper&quot;:1125000}</td></tr><tr><th>zScoreVsHistory</th><td>9.8</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card flag-PRICE_OUTLIER">
+      <div class="flag-card-header">
+        <span class="badge badge-PRICE_OUTLIER">가격 이상탐지</span>
+        <span class="flag-meta">소방시설점검 · 대한소방안전</span>
+      </div>
+      <p class="flag-description">소방시설점검 계약(대한소방안전, 2024-05-20) 금액이 과거 이력 대비 시세보다 56.5% 높습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>amount</th><td>7200000</td></tr><tr><th>monthlyRate</th><td>600000</td></tr><tr><th>historyMedianRate</th><td>383333</td></tr><tr><th>ratioToHistoryMedian</th><td>1.565</td></tr><tr><th>thresholdRatio</th><td>1.2</td></tr><tr><th>historySampleSize</th><td>3</td></tr><tr><th>historyMonthlyRates</th><td>[375000,383333,391667]</td></tr><tr><th>iqrBounds</th><td>{&quot;q1&quot;:379166.6666666666,&quot;q3&quot;:387500,&quot;lower&quot;:366666.66666666657,&quot;upper&quot;:400000.00000000006}</td></tr><tr><th>zScoreVsHistory</th><td>31.84</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card flag-REPEATED_VENDOR">
+      <div class="flag-card-header">
+        <span class="badge badge-REPEATED_VENDOR">반복 수의계약</span>
+        <span class="flag-meta">승강기유지보수 · 가온엘리베이터</span>
+      </div>
+      <p class="flag-description">승강기유지보수 계약에서 가온엘리베이터가 경쟁입찰 없이 5회 연속 수의계약을 체결했습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>consecutiveCount</th><td>5</td></tr><tr><th>threshold</th><td>3</td></tr><tr><th>contractDates</th><td>[&quot;2021-03-01&quot;,&quot;2022-03-01&quot;,&quot;2023-03-01&quot;,&quot;2024-03-01&quot;,&quot;2025-03-01&quot;]</td></tr><tr><th>amounts</th><td>[12000000,12500000,13000000,16500000,13800000]</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card flag-REPEATED_VENDOR">
+      <div class="flag-card-header">
+        <span class="badge badge-REPEATED_VENDOR">반복 수의계약</span>
+        <span class="flag-meta">청소 · 하늘클린</span>
+      </div>
+      <p class="flag-description">청소 계약에서 하늘클린가 경쟁입찰 없이 3회 연속 수의계약을 체결했습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>consecutiveCount</th><td>3</td></tr><tr><th>threshold</th><td>3</td></tr><tr><th>contractDates</th><td>[&quot;2023-01-15&quot;,&quot;2024-01-15&quot;,&quot;2025-01-15&quot;]</td></tr><tr><th>amounts</th><td>[37000000,38500000,39000000]</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card flag-REPEATED_VENDOR">
+      <div class="flag-card-header">
+        <span class="badge badge-REPEATED_VENDOR">반복 수의계약</span>
+        <span class="flag-meta">소방시설점검 · 대한소방안전</span>
+      </div>
+      <p class="flag-description">소방시설점검 계약에서 대한소방안전가 경쟁입찰 없이 5회 연속 수의계약을 체결했습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>consecutiveCount</th><td>5</td></tr><tr><th>threshold</th><td>3</td></tr><tr><th>contractDates</th><td>[&quot;2021-05-20&quot;,&quot;2022-05-20&quot;,&quot;2023-05-20&quot;,&quot;2024-05-20&quot;,&quot;2025-05-20&quot;]</td></tr><tr><th>amounts</th><td>[4500000,4600000,4700000,7200000,4800000]</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card flag-REPEATED_VENDOR">
+      <div class="flag-card-header">
+        <span class="badge badge-REPEATED_VENDOR">반복 수의계약</span>
+        <span class="flag-meta">보안 · 세이프가드</span>
+      </div>
+      <p class="flag-description">보안 계약에서 세이프가드가 경쟁입찰 없이 5회 연속 수의계약을 체결했습니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>consecutiveCount</th><td>5</td></tr><tr><th>threshold</th><td>3</td></tr><tr><th>contractDates</th><td>[&quot;2023-02-01&quot;,&quot;2024-01-05&quot;,&quot;2024-04-05&quot;,&quot;2024-07-05&quot;,&quot;2024-10-05&quot;]</td></tr><tr><th>amounts</th><td>[29500000,8000000,8000000,8000000,8100000]</td></tr></table>
+      </details>
+    </article>
+    <article class="flag-card flag-CONTRACT_SPLITTING">
+      <div class="flag-card-header">
+        <span class="badge badge-CONTRACT_SPLITTING">계약 쪼개기</span>
+        <span class="flag-meta">보안 · 세이프가드</span>
+      </div>
+      <p class="flag-description">보안 계약에서 세이프가드와 4건으로 나눠 체결한 계약의 합계(32,100,000원)가 입찰 기준액(30,000,000원)을 초과합니다.</p>
+      <details>
+        <summary>판단 근거(대조 데이터) 보기</summary>
+        <table class="reference-table"><tr><th>contractCount</th><td>4</td></tr><tr><th>contractDates</th><td>[&quot;2024-01-05&quot;,&quot;2024-04-05&quot;,&quot;2024-07-05&quot;,&quot;2024-10-05&quot;]</td></tr><tr><th>individualAmounts</th><td>[8000000,8000000,8000000,8100000]</td></tr><tr><th>totalAmount</th><td>32100000</td></tr><tr><th>biddingThreshold</th><td>30000000</td></tr></table>
+      </details>
+    </article>
+
+  <h2>전체 지출 내역 (28건)</h2>
+  <div class="table-scroll">
+    <table class="records">
+      <thead><tr><th>계약일</th><th>항목</th><th>업체</th><th>계약방식</th><th class="num">금액</th><th>상태</th></tr></thead>
+      <tbody>
+    <tr class="">
+      <td>2021-01-15</td>
+      <td>청소</td>
+      <td>하늘클린</td>
+      <td>수의계약</td>
+      <td class="num">36,000,000원</td>
+      <td></td>
+    </tr>
+    <tr class="">
+      <td>2021-02-01</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>경쟁입찰</td>
+      <td class="num">29,000,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2021-03-01</td>
+      <td>승강기유지보수</td>
+      <td>가온엘리베이터</td>
+      <td>수의계약</td>
+      <td class="num">12,000,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="">
+      <td>2021-04-10</td>
+      <td>조경</td>
+      <td>푸른조경</td>
+      <td>경쟁입찰</td>
+      <td class="num">8,000,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2021-05-20</td>
+      <td>소방시설점검</td>
+      <td>대한소방안전</td>
+      <td>수의계약</td>
+      <td class="num">4,500,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="">
+      <td>2022-01-15</td>
+      <td>청소</td>
+      <td>은하환경</td>
+      <td>경쟁입찰</td>
+      <td class="num">33,000,000원</td>
+      <td></td>
+    </tr>
+    <tr class="">
+      <td>2022-02-01</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>경쟁입찰</td>
+      <td class="num">30,500,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2022-03-01</td>
+      <td>승강기유지보수</td>
+      <td>가온엘리베이터</td>
+      <td>수의계약</td>
+      <td class="num">12,500,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="">
+      <td>2022-04-10</td>
+      <td>조경</td>
+      <td>초록마당</td>
+      <td>경쟁입찰</td>
+      <td class="num">7,800,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2022-05-20</td>
+      <td>소방시설점검</td>
+      <td>대한소방안전</td>
+      <td>수의계약</td>
+      <td class="num">4,600,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2023-01-15</td>
+      <td>청소</td>
+      <td>하늘클린</td>
+      <td>수의계약</td>
+      <td class="num">37,000,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2023-02-01</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>수의계약</td>
+      <td class="num">29,500,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2023-03-01</td>
+      <td>승강기유지보수</td>
+      <td>가온엘리베이터</td>
+      <td>수의계약</td>
+      <td class="num">13,000,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="">
+      <td>2023-04-10</td>
+      <td>조경</td>
+      <td>푸른조경</td>
+      <td>경쟁입찰</td>
+      <td class="num">8,200,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2023-05-20</td>
+      <td>소방시설점검</td>
+      <td>대한소방안전</td>
+      <td>수의계약</td>
+      <td class="num">4,700,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2024-01-05</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>수의계약</td>
+      <td class="num">8,000,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2024-01-15</td>
+      <td>청소</td>
+      <td>하늘클린</td>
+      <td>수의계약</td>
+      <td class="num">38,500,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2024-03-01</td>
+      <td>승강기유지보수</td>
+      <td>가온엘리베이터</td>
+      <td>수의계약</td>
+      <td class="num">16,500,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2024-04-05</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>수의계약</td>
+      <td class="num">8,000,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="">
+      <td>2024-04-10</td>
+      <td>조경</td>
+      <td>늘봄가든</td>
+      <td>경쟁입찰</td>
+      <td class="num">8,100,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2024-05-20</td>
+      <td>소방시설점검</td>
+      <td>대한소방안전</td>
+      <td>수의계약</td>
+      <td class="num">7,200,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2024-07-05</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>수의계약</td>
+      <td class="num">8,000,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2024-10-05</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>수의계약</td>
+      <td class="num">8,100,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2025-01-15</td>
+      <td>청소</td>
+      <td>하늘클린</td>
+      <td>수의계약</td>
+      <td class="num">39,000,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="">
+      <td>2025-02-01</td>
+      <td>보안</td>
+      <td>세이프가드</td>
+      <td>경쟁입찰</td>
+      <td class="num">31,000,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2025-03-01</td>
+      <td>승강기유지보수</td>
+      <td>가온엘리베이터</td>
+      <td>수의계약</td>
+      <td class="num">13,800,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr>
+    <tr class="">
+      <td>2025-04-10</td>
+      <td>조경</td>
+      <td>초록마당</td>
+      <td>경쟁입찰</td>
+      <td class="num">8,300,000원</td>
+      <td></td>
+    </tr>
+    <tr class="flagged-row">
+      <td>2025-05-20</td>
+      <td>소방시설점검</td>
+      <td>대한소방안전</td>
+      <td>수의계약</td>
+      <td class="num">4,800,000원</td>
+      <td><span class="badge badge-flagged">이상탐지</span></td>
+    </tr></tbody>
+    </table>
+  </div>
+
+  <footer>
+    HOA-Guard 프로토타입 · data/mock-expenses.csv 기반 · <code>npm run dashboard</code>로 재생성
+  </footer>
+</div>
+</body>
+</html>

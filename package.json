@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "detect": "tsx src/index.ts",
+    "dashboard": "tsx src/generateDashboard.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
