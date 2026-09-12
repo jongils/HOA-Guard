@@ -55,3 +55,21 @@ npm run typecheck
 `npm run dashboard`로 `dashboard/index.html`을 생성합니다. 외부 서버 없이 브라우저에서 파일을 바로
 열어보거나, GitHub Pages 등으로 정적 호스팅할 수 있습니다. 전체 지출 내역과 이상탐지 플래그, 그리고
 각 플래그의 판단 근거(대조 데이터)를 한 화면에서 확인할 수 있습니다.
+
+`main`에 `dashboard/**` 변경이 push되면 `.github/workflows/deploy-pages.yml`이 자동으로
+GitHub Pages(`https://<username>.github.io/HOA-Guard/`)에 배포합니다.
+
+## GitHub 이슈/PR에서 Claude 호출 (`@claude`)
+
+`.github/workflows/claude.yml`이 이슈나 PR 코멘트에 `@claude`가 포함되면 [Claude Code Action](https://github.com/anthropics/claude-code-action)을
+실행해 자동으로 응답/작업하도록 설정되어 있습니다. 최초 1회만 아래 설정이 필요합니다.
+
+1. Claude Code CLI가 설치된 환경에서 로그인용 OAuth 토큰을 발급합니다.
+   ```bash
+   claude setup-token
+   ```
+2. 발급된 토큰을 저장소 시크릿으로 등록합니다.
+   `Settings → Secrets and variables → Actions → New repository secret`
+   - Name: `CLAUDE_CODE_OAUTH_TOKEN`
+   - Value: 위에서 발급받은 토큰
+3. 이슈나 PR 코멘트에 `@claude ...`라고 멘션하면 워크플로가 트리거됩니다.
