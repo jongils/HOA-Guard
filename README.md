@@ -30,7 +30,15 @@ AI는 의결권을 갖지 않습니다. 의사결정 주체(입주자대표회�
 
 기획/설계 단계 완료, 1단계 MVP인 **지출 이상탐지 엔진 + 공개 대시보드** 프로토타입 구현 중. 자세한 배경은 [`docs/handoff.md`](docs/handoff.md)를 참고하세요.
 
-## 지출 이상탐지 엔진 (프로토타입)
+## 사용 방법
+
+### 1. 설치
+
+```bash
+npm install
+```
+
+### 2. 지출 이상탐지 엔진 실행
 
 기술 스택: Node.js + TypeScript. `data/mock-expenses.csv`의 목업 관리비 지출 데이터를 대상으로
 아래 3가지 이상탐지 로직을 검증합니다.
@@ -39,30 +47,34 @@ AI는 의결권을 갖지 않습니다. 의사결정 주체(입주자대표회�
 - **반복 수의계약 탐지**: 경쟁입찰 없이 동일 업체와 연속으로 수의계약을 반복하는 패턴 탐지
 - **계약 쪼개기 탐지**: 입찰 기준액을 회피하기 위해 계약을 여러 건으로 분할한 패턴 탐지
 
+```bash
+npm run detect     # 이상탐지 실행 및 콘솔 리포트 출력
+npm test           # 탐지 로직 단위 테스트
+npm run typecheck  # 타입 검사
+```
+
 모든 플래그는 판단에 사용된 대조 데이터(과거 이력, 통계값, 임계값)를 `reference` 필드에 함께 담아
 블랙박스 판정이 되지 않도록 합니다. 플래그는 `data/output/anomaly-log.jsonl`에 append-only로 기록됩니다.
 
+실제 데이터로 검증하려면 `data/mock-expenses.csv`를 같은 형식(계약일/업체/항목/계약방식/금액/계약기간)의
+실데이터로 교체한 뒤 다시 실행하면 됩니다.
+
+### 3. 공개 대시보드 생성 및 확인
+
 ```bash
-npm install
-npm run detect     # 이상탐지 실행 및 콘솔 리포트 출력
-npm run dashboard  # dashboard/index.html 정적 대시보드 생성
-npm test           # 탐지 로직 단위 테스트
-npm run typecheck
+npm run dashboard   # dashboard/index.html 생성
 ```
 
-## 공개 대시보드
-
-`npm run dashboard`로 `dashboard/index.html`을 생성합니다. 외부 서버 없이 브라우저에서 파일을 바로
-열어보거나, GitHub Pages 등으로 정적 호스팅할 수 있습니다. 전체 지출 내역과 이상탐지 플래그, 그리고
-각 플래그의 판단 근거(대조 데이터)를 한 화면에서 확인할 수 있습니다.
+외부 서버 없이 브라우저에서 파일을 바로 열어보거나, 정적 호스팅할 수 있습니다. 전체 지출 내역과
+이상탐지 플래그, 각 플래그의 판단 근거(대조 데이터)를 한 화면에서 확인할 수 있습니다.
 
 `main`에 `dashboard/**` 변경이 push되면 `.github/workflows/deploy-pages.yml`이 자동으로
-GitHub Pages(`https://<username>.github.io/HOA-Guard/`)에 배포합니다.
+GitHub Pages에 배포합니다 → **https://jongils.github.io/HOA-Guard/**
 
-## GitHub 이슈/PR에서 Claude 호출 (`@claude`)
+### 4. GitHub 이슈/PR에서 Claude 호출 (`@claude`)
 
-`.github/workflows/claude.yml`이 이슈나 PR 코멘트에 `@claude`가 포함되면 [Claude Code Action](https://github.com/anthropics/claude-code-action)을
-실행해 자동으로 응답/작업하도록 설정되어 있습니다. 최초 1회만 아래 설정이 필요합니다.
+이슈나 PR 코멘트에 `@claude`를 멘션하면 [Claude Code Action](https://github.com/anthropics/claude-code-action)이
+자동으로 응답하거나 작업합니다 (`.github/workflows/claude.yml`). 최초 1회만 아래 설정이 필요합니다 (설정 완료됨).
 
 1. Claude Code CLI가 설치된 환경에서 로그인용 OAuth 토큰을 발급합니다.
    ```bash
@@ -72,4 +84,4 @@ GitHub Pages(`https://<username>.github.io/HOA-Guard/`)에 배포합니다.
    `Settings → Secrets and variables → Actions → New repository secret`
    - Name: `CLAUDE_CODE_OAUTH_TOKEN`
    - Value: 위에서 발급받은 토큰
-3. 이슈나 PR 코멘트에 `@claude ...`라고 멘션하면 워크플로가 트리거됩니다.
+3. 이슈나 PR 코멘트에 `@claude 이 함수 리팩터링 해줘` 처럼 멘션하면 워크플로가 트리거됩니다.
