@@ -45,3 +45,26 @@ export function parseQuoteSubmissionsCsv(csv) {
     submittedAt: row.submittedAt,
   }));
 }
+
+/** 단일 행짜리 CSV(현재 적립금 스냅샷)에서 첫 행만 파싱한다. */
+export function parseReserveFundCsv(csv) {
+  const [row] = parseCsvRows(csv);
+  return {
+    asOfDate: row.asOfDate,
+    unitCount: Number(row.unitCount),
+    currentBalance: Number(row.currentBalance),
+    monthlyContributionPerUnit: Number(row.monthlyContributionPerUnit),
+  };
+}
+
+export function parseMaintenanceItemsCsv(csv) {
+  return parseCsvRows(csv).map((row) => ({
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    cycleYears: Number(row.cycleYears),
+    lastPerformedYear: Number(row.lastPerformedYear),
+    estimatedCost: Number(row.estimatedCost),
+    delayInflationRate: Number(row.delayInflationRate),
+  }));
+}

@@ -8,6 +8,7 @@
     "detect": "node tools/detect.js",
     "compare-bids": "node tools/compareBids.js",
     "check-announcement": "node tools/checkAnnouncement.js",
+    "simulate-plan": "node tools/simulateLongTermPlan.js",
     "serve": "node tools/serve.js",
     "test": "vitest run"
   },

@@ -30,8 +30,9 @@ AI는 의결권을 갖지 않습니다. 의사결정 주체(입주자대표회�
 
 ## 현재 상태
 
-1단계 MVP(지출 이상탐지 엔진 + 공개 대시보드) 프로토타입 구현 완료, 2단계(입찰 비교 어시스턴트) 프로토타입
-구현 중. 자세한 배경은 [`docs/handoff.md`](docs/handoff.md)를 참고하세요.
+1~3단계(지출 이상탐지, 입찰 비교 어시스턴트, 장기수선계획 시뮬레이터) 프로토타입 구현 완료.
+외부 연동 감사 채널은 실제 API 연동 없이 참고용 안내로 범위를 좁혀 구현했습니다 (아래 참고).
+자세한 배경은 [`docs/handoff.md`](docs/handoff.md)를 참고하세요.
 
 ## 사용 방법
 
@@ -58,10 +59,12 @@ Node.js/npm도 필요 없습니다.
 - `dashboard/data/mock-expenses.csv` — 관리비 지출 이력
 - `dashboard/data/market-bid-benchmarks.csv` — 유사 단지 낙찰가 데이터
 - `dashboard/data/sample-quotes.csv` — 비교할 견적서
+- `dashboard/data/reserve-fund-status.csv` — 현재 장기수선충당금 적립 현황 (세대수, 잔액, 세대당 월 적립액)
+- `dashboard/data/maintenance-items.csv` — 장기수선계획 항목별 주기·최근 시행연도·예상 공사비
 
 각 파일의 컬럼 형식은 기존 목업 데이터를 참고하세요.
 
-### 3. 이상탐지·견적비교 로직
+### 3. 이상탐지·견적비교·장기수선계획 로직
 
 - **가격 이상탐지**: 같은 항목의 과거 계약 이력(월 단가로 정규화) 대비 20%+ 과다 견적 탐지
 - **반복 수의계약 탐지**: 경쟁입찰 없이 동일 업체와 연속으로 수의계약을 반복하는 패턴 탐지
@@ -71,6 +74,14 @@ Node.js/npm도 필요 없습니다.
 - **입찰 공고문 검증**: [`templates/bid-announcement-template.md`](templates/bid-announcement-template.md) 표준
   템플릿으로 작성한 공고문을 검증 — 공고 기간이 너무 짧거나, 특정 브랜드를 지정했거나, 평가 배점
   합계가 100점이 아니면 플래깅
+- **장기수선계획 시뮬레이터**: 적립금 현황과 항목별 수선 주기를 바탕으로 향후 10~20년을 연도별로
+  시뮬레이션. 적립금이 부족한 해에는 가장 오래 밀린 항목부터 우선 집행하고, 집행하지 못한 항목은
+  다음 해로 이월되며 `delayInflationRate`만큼 공사비가 매년 늘어난다고 가정 — "공사 지연 시 비용
+  증가폭"을 그대로 계산해서 보여줍니다. 시뮬레이션 기간 내내 자금 부족으로 미집행된 항목은
+  "만성 자금 부족"으로 별도 표시합니다.
+- **외부 신고·비교 채널**: K-apt, 지자체 공동주택관리 지원센터, 국민신문고 등 참고할 수 있는 채널을
+  안내합니다. **실제 API 연동은 아니며**, 실제 웹사이트 주소는 사용자가 직접 확인 후 채워 넣어야
+  하는 참고용 정적 정보입니다(`dashboard/lib/externalAuditChannels.js`).
 
 모든 판정은 사용된 대조 데이터(과거 이력, 통계값, 임계값)를 `reference`로 함께 제공해
 블랙박스 판정이 되지 않도록 합니다. 로직은 `dashboard/lib/`에 있으며, 대시보드(`dashboard/app.js`)와
@@ -85,7 +96,8 @@ npm install
 npm run detect             # 이상탐지 콘솔 리포트 (tools/output/anomaly-log.jsonl에 append-only 기록)
 npm run compare-bids       # 견적 비교 콘솔 리포트
 npm run check-announcement # 입찰 공고문 검증 예시 실행
-npm test                   # dashboard/lib/ 로직 단위 테스트 (24개)
+npm run simulate-plan      # 장기수선계획 시뮬레이션 콘솔 리포트
+npm test                   # dashboard/lib/ 로직 단위 테스트 (30개)
 ```
 
 ### 5. GitHub 이슈/PR에서 Claude 호출 (`@claude`)

@@ -1,9 +1,17 @@
-import { parseExpensesCsv, parseBidBenchmarksCsv, parseQuoteSubmissionsCsv } from './lib/parse.js';
+import {
+  parseExpensesCsv,
+  parseBidBenchmarksCsv,
+  parseQuoteSubmissionsCsv,
+  parseReserveFundCsv,
+  parseMaintenanceItemsCsv,
+} from './lib/parse.js';
 import { detectPriceOutliers } from './lib/priceOutlier.js';
 import { detectRepeatedVendor } from './lib/repeatedVendor.js';
 import { detectContractSplitting } from './lib/contractSplitting.js';
 import { compareQuotes } from './lib/bidComparison.js';
-import { renderDashboardBody } from './lib/render.js';
+import { simulateLongTermPlan, findChronicShortfalls } from './lib/longTermPlanSimulator.js';
+import { suggestExternalChannels } from './lib/externalAuditChannels.js';
+import { renderDashboardBody, renderLongTermPlanSection, renderExternalChannelsSection } from './lib/render.js';
 
 async function loadCsv(path) {
   const res = await fetch(path);
@@ -12,10 +20,12 @@ async function loadCsv(path) {
 }
 
 async function main() {
-  const [expensesCsv, benchmarksCsv, quotesCsv] = await Promise.all([
+  const [expensesCsv, benchmarksCsv, quotesCsv, reserveFundCsv, maintenanceItemsCsv] = await Promise.all([
     loadCsv('data/mock-expenses.csv'),
     loadCsv('data/market-bid-benchmarks.csv'),
     loadCsv('data/sample-quotes.csv'),
+    loadCsv('data/reserve-fund-status.csv'),
+    loadCsv('data/maintenance-items.csv'),
   ]);
 
   const records = parseExpensesCsv(expensesCsv);
@@ -29,9 +39,19 @@ async function main() {
   const quotes = parseQuoteSubmissionsCsv(quotesCsv);
   const bidResults = compareQuotes(quotes, benchmarks);
 
+  const reserveFund = parseReserveFundCsv(reserveFundCsv);
+  const maintenanceItems = parseMaintenanceItemsCsv(maintenanceItemsCsv);
+  const yearlyResults = simulateLongTermPlan(reserveFund, maintenanceItems);
+  const chronicShortfalls = findChronicShortfalls(yearlyResults);
+
+  const hasIssues = flags.length > 0 || bidResults.some((r) => r.verdict === 'HIGH') || chronicShortfalls.length > 0;
+
   document.getElementById('generated-at').textContent =
     `공동주택 관리비 지출 이상탐지 현황 · 조회 시각 ${new Date().toISOString()} (브라우저에서 실시간 계산)`;
-  document.getElementById('app').innerHTML = renderDashboardBody(records, flags, bidResults);
+  document.getElementById('app').innerHTML =
+    renderDashboardBody(records, flags, bidResults) +
+    renderLongTermPlanSection(reserveFund, yearlyResults, chronicShortfalls) +
+    renderExternalChannelsSection(suggestExternalChannels(), hasIssues);
 }
 
 main().catch((err) => {
